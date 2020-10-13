@@ -9,6 +9,7 @@ output: pdf_document
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(ggplot2)
+library(readxl)
 ```
 
 ```{r}
@@ -53,20 +54,45 @@ nbainfo <- read_csv("nbainfo.csv",
   rename_with(~ str_replace(.x, "1920", "current")) %>% 
   rename_with(~ str_replace(.x, "2021", "future")) %>% 
   slice(1:30)
+
+playercontracts <- read_excel("bbrefcontractdata.xlsx")
+
+playercontracts_modified <- playercontracts %>%
+  rename_with(~ str_replace(.x, "1920", "bubbleyear")) %>% 
+  rename_with(~ str_replace(.x, "2021", "nextyear")) %>%
+  select(playername, playerid, team, bubbleyearsalary, nextyearsalary)
 ```
 
 ```{r}
 
 # Some cool graphs
 nbainfo %>%
-ggplot(aes(x = currentwinpct, y = valuation)) + 
+ggplot(aes(x = currentwinpct, y = valuation, label = team)) + 
   geom_point() + 
-  stat_smooth(formula = y ~ x, method = "lm", se = TRUE)
+  stat_smooth(formula = y ~ x, method = "lm", se = TRUE) + 
+  geom_text(nudge_x = 0.02) +
+  annotate(x=0.5, y=3.5, label=paste("Correlation = ", 
+                                     round(cor(nbainfo$currentwinpct, 
+                                               nbainfo$valuation), 3)), 
+           geom="text", size=5) + 
+  labs(title = "Team Valuation vs. 2019-2020 Winning Percentage",
+       x = "2019-2020 Winning Percentage", y = "Team Valuation") + 
+  scale_y_continuous(breaks = c(0, 1, 2, 3, 4),
+                     labels = c("$0", "$1B", "$2B", "$3B", "$4B"))
 
 nbainfo %>%
-ggplot(aes(x = tenyrwinpct, y = valuation)) + 
+ggplot(aes(x = tenyrwinpct, y = valuation, label = team)) + 
   geom_point() + 
-  stat_smooth(formula = y ~ x, method = "lm", se = TRUE)
+  geom_text(nudge_x = 0.01) + 
+  stat_smooth(formula = y ~ x, method = "lm", se = TRUE) + 
+  annotate(x=0.5, y=3.5, label=paste("Correlation = ", 
+                                     round(cor(nbainfo$tenyrwinpct, 
+                                               nbainfo$valuation), 3)), 
+         geom="text", size=5) + 
+  labs(title = "Team Valuation vs. Ten Year Winning Percentage",
+       x = "Ten Year Winning Percentage", y = "Team Valuation") + 
+  scale_y_continuous(breaks = c(0, 1, 2, 3, 4),
+                     labels = c("$0", "$1B", "$2B", "$3B", "$4B"))
 
 nbainfo %>%
   ggplot(aes(x = fct_reorder(team, valuation), y = valuation)) + 
@@ -85,6 +111,7 @@ nbainfo %>%
          y = "Team") + 
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80),
                      labels = c("$0", "$20B", "$40B", "$60B", "$80B"))
+  
   
 
 
