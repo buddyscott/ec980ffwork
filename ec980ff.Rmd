@@ -1,15 +1,38 @@
 ---
-title: "Ec 980FF Data Analysis"
+title: "Ec 980FF Final Paper Summary"
 author: "Buddy Scott"
-date: "10/14/2020"
+date: "10/15/2020"
 output: pdf_document
 ---
+
+This paper will analyze the potential ramifications of the ongoing COVID-19
+pandemic on the finances of the NBA and the market for its players. The NBA 
+salary cap is the mechanism that effectively equilibrates supply and demand 
+for players. The salary level is set based on Basketball Related Income (BRI).
+NBA Commissioner Adam Silver revealed in May 2020 that ticket sales for
+in-person fan attendances comprises an estimated 40% of the NBA's revenue. The 
+NBA's revenue is roughly split 50-50 between players and the owners of these 
+teams. Figure 1 shows how the players' and owners' split of BRI would decrease
+according to this projection by Silver from $4 billion to $2.4 billion. If this
+is the case, the league might have to withhold an increased percentage of 
+players' salaries in escrow for the upcoming season to finance the league's
+operations, potentially leaded to heavily contested debates at the bargaining
+table of an updated Collective Bargaining Agreement. 
+
+The two pressing economic problems this paper will address are the league's 
+potentially inaccurate forward guidance provided to teams about salary cap 
+levels for the upcoming season, as well as potential inequalities emerging
+from teams' varying levels of cash flows and spending power that could 
+potentially harm competitive balance in a zero-sum league.
+
+
+
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = FALSE)
 library(tidyverse)
 library(ggplot2)
-library(readxl)
+library(gt)
 ```
 
 ```{r}
@@ -53,19 +76,56 @@ nbainfo <- read_csv("nbainfo.csv",
                                     operating_income = col_number())) %>%
   rename_with(~ str_replace(.x, "1920", "current")) %>% 
   rename_with(~ str_replace(.x, "2021", "future")) %>% 
-  slice(1:30)
+  slice(1:30) %>%
+  subset(select = -futureprojcapspace)
 
-playercontracts <- read_excel("bbrefcontractdata.xlsx")
+playercontracts <- read_csv("bbrefcontractdata.csv", col_type = cols(
+  playername = col_character(),
+  playerid = col_character(),
+  team = col_character(),
+  salary1920 = col_double(),
+  salary2021 = col_double(),
+  salary2122 = col_double(),
+  salary2223 = col_double(),
+  salary2324 = col_double(),
+  salary2425 = col_double(),
+  signedusing = col_character(),
+  guaranteed = col_double()
+))
 
 playercontracts_modified <- playercontracts %>%
-  rename_with(~ str_replace(.x, "1920", "bubbleyear")) %>% 
-  rename_with(~ str_replace(.x, "2021", "nextyear")) %>%
-  select(playername, playerid, team, bubbleyearsalary, nextyearsalary)
+  filter(salary2021 >= 20000000) %>%
+  arrange(desc(salary2021))
 ```
 
 ```{r}
 
+tibble(subject = c("2019-2020 Season", 
+                   "Projection for Next Season With No Fans"),
+       ynear = c("$8B", "$4.8B"),
+       yfar = c("$4B", "$2.4B"), 
+       ydiff = c("$4B", "$2.4B")) %>%
+    
+    # table setup
+    gt() %>%
+    cols_label(subject = "BRI",
+               ynear = "Total",
+               yfar = "Players",
+               ydiff = "Owners") %>%
+    tab_style(cell_borders(sides = "right"),
+              location = cells_body(columns = vars(subject))) %>%
+    tab_style(cell_text(weight = "bold"),
+              location = cells_body(columns = vars(subject))) %>%
+    cols_align(align = "center", columns = TRUE) %>%
+    fmt_markdown(columns = TRUE) %>%
+    tab_header(title = "Figure 1: Potential BRI Drop in 2020-2021 Season", 
+               subtitle = "Commisssioner Adam Silver projects ticket sales
+               comprise 40% of BRI")
+```
+
+```{r}
 # Some cool graphs
+
 nbainfo %>%
 ggplot(aes(x = currentwinpct, y = valuation, label = team)) + 
   geom_point() + 
@@ -75,7 +135,7 @@ ggplot(aes(x = currentwinpct, y = valuation, label = team)) +
                                      round(cor(nbainfo$currentwinpct, 
                                                nbainfo$valuation), 3)), 
            geom="text", size=5) + 
-  labs(title = "Team Valuation vs. 2019-2020 Winning Percentage",
+  labs(title = "Figure 2: Team Valuation vs. 2019-2020 Winning Percentage",
        x = "2019-2020 Winning Percentage", y = "Team Valuation") + 
   scale_y_continuous(breaks = c(0, 1, 2, 3, 4),
                      labels = c("$0", "$1B", "$2B", "$3B", "$4B"))
@@ -89,7 +149,7 @@ ggplot(aes(x = tenyrwinpct, y = valuation, label = team)) +
                                      round(cor(nbainfo$tenyrwinpct, 
                                                nbainfo$valuation), 3)), 
          geom="text", size=5) + 
-  labs(title = "Team Valuation vs. Ten Year Winning Percentage",
+  labs(title = "Figure 3: Team Valuation vs. Ten Year Winning Percentage",
        x = "Ten Year Winning Percentage", y = "Team Valuation") + 
   scale_y_continuous(breaks = c(0, 1, 2, 3, 4),
                      labels = c("$0", "$1B", "$2B", "$3B", "$4B"))
@@ -98,7 +158,7 @@ nbainfo %>%
   ggplot(aes(x = fct_reorder(team, valuation), y = valuation)) + 
     geom_col() + 
     coord_flip() + 
-    labs(title = "Team Valuations", x = "February 2020 Valuation", 
+    labs(title = "Figure 4: Team Valuations", x = "February 2020 Valuation", 
          y = "Team") + 
     scale_y_continuous(breaks = c(0, 1, 2, 3, 4),
                      labels = c("$0", "$1B", "$2B", "$3B", "$4B"))
@@ -107,7 +167,7 @@ nbainfo %>%
   ggplot(aes(x = fct_reorder(team, nw), y = nw)) + 
     geom_col() + 
     coord_flip() + 
-    labs(title = "Team Majority Owner's Net Worth", x = "Net Worth", 
+    labs(title = "Figure 5: Team Majority Owner's Net Worth", x = "Net Worth", 
          y = "Team") + 
     scale_y_continuous(breaks = c(0, 20, 40, 60, 80),
                      labels = c("$0", "$20B", "$40B", "$60B", "$80B"))
@@ -117,3 +177,9 @@ nbainfo %>%
 
 ```
 
+\newpage
+## Code
+
+```{r print-code, ref.label=knitr::all_labels(), echo = TRUE, eval=FALSE}
+
+```
