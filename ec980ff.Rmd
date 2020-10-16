@@ -68,9 +68,12 @@ whereas the owner of the Miami Heat has all of his money in cruise ships and
 the owner of the Indiana Pacers invests in shopping malls. Analyzing not only 
 each NBA team's financial condition but also the financial condition of their 
 majority owner will prove crucial to better understanding the financial 
-situation of the NBA. I look forward to doing more research and writing an 
-unorthodox, yet important paper that relates to the Economics of the 
-Coronavirus.
+situation of the NBA. I will also be looking at data for all 30 NBA teams 
+about what financial commitments that have to players in the upcoming season 
+to better understand / project the financial constraints that smaller-market
+teams with relatively large projected payroll mights face. I look forward to 
+doing more research and writing an unorthodox, yet important paper that 
+relates to the Economics of the Coronavirus.
 
 \newpage
 ```{r setup, include=FALSE}
